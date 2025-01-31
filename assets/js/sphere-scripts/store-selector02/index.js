@@ -75,32 +75,40 @@ const updateTitle = storeSelector => {
 }
 
 /* *********
-Este módulo es un obsevador permanente del DOM
-y tiene como objetivo revisar si las shipping
-options y el store selector están presentes. En
-caso sea así, se modifican estos elementos.
+Observador: Revisa cambios en el Checkout
 ********** */
+
+// const observer = new MutationObserver(mutations => {
+//   mutations.forEach(mutation => {
+//     // const storeSelector = document.querySelector('.dynamic-form-field.dynamic-form-field--field_52') // Comment to use closes() to get that element
+//     const storeSelectorChild = document.querySelector("#field_52Input");
+//     const storeSelector = storeSelectorChild.closest(".dynamic-form-field.dynamic-form-field--field_52");
+//     const shippingOptions = document.querySelector('#checkout-shipping-options')
+
+//     console.log('Hello')
+//     if (storeSelector && shippingOptions) {
+//       // Realizamos cambios en el DOM
+//       safeDOMUpdate(() => {
+//         updateTitle(storeSelector)
+//         moveStoreSelector(storeSelector, shippingOptions)
+//         hideStoreSelector(storeSelector, shippingOptions)
+//       })
+//     }
+//   })
+// })
 
 const observer = new MutationObserver(mutations => {
   mutations.forEach(mutation => {
-    // const storeSelector = document.querySelector('.dynamic-form-field.dynamic-form-field--field_52') // Comment to use closes() to get that element
-    const storeSelectorChild = document.querySelector("#field_52Input");
-    const storeSelector = storeSelectorChild.closest(".dynamic-form-field.dynamic-form-field--field_52");
-    const shippingOptions = document.querySelector('#checkout-shipping-options')
+    // Actualización segura
+    safeDOMUpdate(() => {
+      createSelectFromShippingOptions()
+    })
 
-    console.log('Hello')
-    if (storeSelector && shippingOptions) {
-      // Realizamos cambios en el DOM
-      safeDOMUpdate(() => {
-        updateTitle(storeSelector)
-        moveStoreSelector(storeSelector, shippingOptions)
-        hideStoreSelector(storeSelector, shippingOptions)
-      })
-    }
+    // Log
+    console.log('Cambios realizados')
   })
 })
 
-// Observa cambios en todo el body
 observer.observe(document.body, { childList: true, subtree: true })
 
 /* *********
@@ -112,4 +120,88 @@ const safeDOMUpdate = func => {
   observer.disconnect()
   func()
   observer.observe(document.body, { childList: true, subtree: true })
+}
+
+
+function createSelectFromShippingOptions() {
+  // 1. Selecciona el fieldset principal
+  const shippingOptionsFieldset = document.querySelector('#checkout-shipping-options');
+  if (!shippingOptionsFieldset) return;
+
+  // 1.1. Verificar si el SELECT ya existe
+  const existingSelect = shippingOptionsFieldset.querySelector('#sphere-shipping-method-select');
+  if (existingSelect) {
+    // Si existe, salimos para evitar recrearlo varias veces
+    return;
+  }
+
+  // 2. Obtén la lista de <li> que contienen cada opción de envío
+  const optionsList = shippingOptionsFieldset.querySelectorAll('.form-checklist-item');
+  if (!optionsList.length) return;
+
+  // 3. Crea el SELECT
+  const selectElement = document.createElement('select');
+  selectElement.id = "sphere-shipping-method-select";
+  selectElement.classList.add("form-select"); // Clase para estilos, opcional
+
+  // (Opcional) Guarda los radio inputs en un array si luego necesitas manipularlos
+  const radioInputs = [];
+
+  // 4. Recorre cada opción para crear un <option> en el SELECT
+  optionsList.forEach(option => {
+    const radioInput = option.querySelector('input[type="radio"]');
+    if (!radioInput) return;
+
+    // Guarda el radio input para referencia futura (si lo necesitas)
+    radioInputs.push(radioInput);
+
+    // Busca los elementos donde se encuentra la descripción y el precio
+    const labelElement = option.querySelector('.shippingOption-desc');
+    const priceElement = option.querySelector('.shippingOption-price');
+
+    // Extrae el texto si existen
+    const label = labelElement ? labelElement.textContent.trim() : '';
+    const price = priceElement ? priceElement.textContent.trim() : '';
+
+    // Crea la opción solo si tenemos al menos un label
+    if (label) {
+      const optionElement = document.createElement('option');
+      optionElement.value = radioInput.value;
+
+      // Si existe precio, combínalo en el texto, si no, solo usa el label
+      optionElement.textContent = price ? `${label} (${price})` : label;
+
+      // Si el radio estaba marcado, marcamos la opción en el SELECT
+      if (radioInput.checked) {
+        optionElement.selected = true;
+      }
+
+      selectElement.appendChild(optionElement);
+    }
+  });
+
+  // 5. Elimina u oculta la lista de radios original antes de insertar el SELECT
+  //    - Si quieres eliminarla completamente:
+  // shippingOptionsFieldset.innerHTML = '';
+  //
+  //    - Si prefieres solo ocultarla para que los radios sigan existiendo en el DOM 
+  //      (a veces es necesario si tu plataforma los requiere):
+  const oldList = shippingOptionsFieldset.querySelector('.form-checklist');
+  if (oldList) {
+    oldList.style.display = 'none';
+  }
+
+  // Agrega el SELECT al fieldset
+  shippingOptionsFieldset.appendChild(selectElement);
+
+  // 6. Listener para cuando el usuario cambie la opción en el SELECT
+  selectElement.addEventListener("change", function () {
+    const selectedValue = selectElement.value;
+
+    radioInputs.forEach(radio => {
+      radio.checked = radio.value === selectedValue
+      // Despacha el evento 'change' para que la plataforma reaccione al cambio
+      radio.dispatchEvent(new Event('change', { bubbles: true }));
+    });
+  });
 }
