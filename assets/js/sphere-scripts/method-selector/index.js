@@ -1,6 +1,6 @@
 // Variables globales
 const topTime = new Date();
-topTime.setHours(11, 0, 0, 0); // Establece hoy a las 18:00:00
+topTime.setHours(11, 0, 0, 0); // Establece el horario
 const methodId = 3; // Índice del método a forzar
 
 /* *********
@@ -12,7 +12,7 @@ const updateTitle = storeSelector => {
 }
 
 /* *********
-Este módulo es un obsevador permanente del DOM
+Este módulo es un observador permanente del DOM
 y tiene como objetivo revisar si las shipping
 options y el store selector están presentes. En
 caso sea así, se modifican estos elementos.
@@ -153,6 +153,12 @@ function addButtonsContainerStyles() {
       box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
       transform: translateY(2px);
     }
+    
+    /* Estilo para el botón activo (seleccionado) */
+    #sphere-method-selector .btn.active {
+      background-color: #ddd;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+    }
   `;
   document.head.appendChild(style);
 }
@@ -196,7 +202,7 @@ function addButtonsContainer(id = 'method-selector') {
 
   // Insertar el contenedor de botones justo después del <legend>
   legend.insertAdjacentElement("afterend", createButtonsContainer(id));
-  console.log('Se agrego container con id:', id);
+  console.log('Se agregó container con id:', id);
 }
 
 // ***********************************************************
@@ -221,10 +227,18 @@ function setupButtonFunctionality() {
   if (botones.length < 2) return;
   const [btnRecojo, btnEntrega] = botones;
 
+  // Función auxiliar para actualizar el botón activo
+  const updateActiveButton = (clickedButton) => {
+    // Remueve la clase 'active' de todos los botones del contenedor y la agrega solo al botón clicado
+    buttonsContainer.querySelectorAll("button").forEach(boton => boton.classList.remove("active"));
+    clickedButton.classList.add("active");
+  };
+
   // Función manejadora para el botón "Recojo en tienda"
   const handleRecojoClick = (event) => {
     event.preventDefault();
     event.stopPropagation();
+    updateActiveButton(btnRecojo);
     showListItems(listItems, [1, 1, 1, 0, 0]);
   };
 
@@ -232,6 +246,7 @@ function setupButtonFunctionality() {
   const handleEntregaClick = (event) => {
     event.preventDefault();
     event.stopPropagation();
+    updateActiveButton(btnEntrega);
     showListItems(listItems, [0, 0, 0, 1, 1]);
   };
 
@@ -246,10 +261,7 @@ function setupButtonFunctionality() {
   if (!btnEntrega.dataset.listenerAttached) {
     btnEntrega.addEventListener("click", handleEntregaClick);
     btnEntrega.dataset.listenerAttached = "true";
-    // Simula el click en el primer botón para que se muestre por defecto
-    btnRecojo.click();
   }
-
 }
 
 function showListItems(listItems, toShow = []) {
@@ -261,7 +273,6 @@ function showListItems(listItems, toShow = []) {
     // Si existe toShow[i] y es distinto de cero, se muestra el elemento,
     // de lo contrario se oculta.
     if (toShow[i] && toShow[i] !== 0) {
-      // Usamos "list-item" para respetar la propiedad de visualización por defecto de un <li>
       const now = new Date();
       console.log('Current hour:', now);
       if (i === methodId && now > topTime)
