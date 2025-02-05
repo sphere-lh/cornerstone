@@ -179,7 +179,6 @@ function createButtonsContainer(id = 'method-selector') {
   // Agregar los botones al contenedor
   botonesContainer.appendChild(botonRecojo);
   botonesContainer.appendChild(botonEntrega);
-  console.log('Se creó el container con id:', id);
   return botonesContainer
 }
 
@@ -202,7 +201,6 @@ function addButtonsContainer(id = 'method-selector') {
 
   // Insertar el contenedor de botones justo después del <legend>
   legend.insertAdjacentElement("afterend", createButtonsContainer(id));
-  console.log('Se agregó container con id:', id);
 }
 
 // ***********************************************************
@@ -212,42 +210,44 @@ function setupButtonFunctionality() {
   // Selecciona el fieldset de opciones de envío
   const shippingOptionsFieldset = document.querySelector('#checkout-shipping-options');
   if (!shippingOptionsFieldset) return;
-
+  
   // Selecciona los elementos de la lista de shipping options.
   // Suponemos que la lista está estructurada como un <ul> con <li> y que existen al menos dos elementos.
   const listItems = shippingOptionsFieldset.querySelectorAll('ul.form-checklist > li');
-  if (listItems.length < 2) return;
-
+  if (!listItems) return;
+  
   // Selecciona el contenedor de botones por su id "sphere-method-selector"
   const buttonsContainer = document.getElementById("sphere-method-selector");
   if (!buttonsContainer) return;
-
+  
   // Asumimos que dentro del contenedor existen dos botones (el primero: "Recojo en tienda", el segundo: "Entrega a domicilio")
   const botones = buttonsContainer.querySelectorAll("button");
   if (botones.length < 2) return;
   const [btnRecojo, btnEntrega] = botones;
-
+  
   // Función auxiliar para actualizar el botón activo
   const updateActiveButton = (clickedButton) => {
     // Remueve la clase 'active' de todos los botones del contenedor y la agrega solo al botón clicado
     buttonsContainer.querySelectorAll("button").forEach(boton => boton.classList.remove("active"));
     clickedButton.classList.add("active");
   };
-
+  
   // Función manejadora para el botón "Recojo en tienda"
   const handleRecojoClick = (event) => {
     event.preventDefault();
     event.stopPropagation();
     updateActiveButton(btnRecojo);
-    showListItems(listItems, [1, 1, 1, 0, 0]);
+    showListItems(listItems, [1, 0, 0, 0, 0]);
+    console.log('Click btnRecojo');
   };
-
+  
   // Función manejadora para el botón "Entrega a domicilio"
   const handleEntregaClick = (event) => {
     event.preventDefault();
     event.stopPropagation();
     updateActiveButton(btnEntrega);
-    showListItems(listItems, [0, 0, 0, 1, 1]);
+    showListItems(listItems, [0, 1, 1, 1, 1]);
+    console.log('Click btnEntrega');
   };
 
   // Verificar si el botón ya tiene asignado el _listener_ (utilizando un atributo data)
@@ -274,7 +274,6 @@ function showListItems(listItems, toShow = []) {
     // de lo contrario se oculta.
     if (toShow[i] && toShow[i] !== 0) {
       const now = new Date();
-      console.log('Current hour:', now);
       if (i === methodId && now > topTime)
         listItems[i].style.display = "none";
       else

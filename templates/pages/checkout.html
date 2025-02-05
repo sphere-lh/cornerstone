@@ -57,7 +57,7 @@
   { dep: 22, nom: 'TACNA' },
   { dep: 23, nom: 'TUMBES' },
   { dep: 24, nom: 'UCAYALI' }];
-      const PROV_ALL = [{ dep: 2, prov: 0, nom: 'ABANCAY'},
+  const PROV_ALL = [{ dep: 2, prov: 0, nom: 'ABANCAY'},
   { dep: 8, prov: 1, nom: 'ACOBAMBA'},
   { dep: 7, prov: 2, nom: 'ACOMAYO'},
   { dep: 1, prov: 3, nom: 'AIJA'},
@@ -253,7 +253,7 @@
   { dep: 1, prov: 193, nom: 'YUNGAY'},
   { dep: 20, prov: 194, nom: 'YUNGUYO'},
   { dep: 23, prov: 195, nom: 'ZARUMILLA'}];    
-      const DIST_ALL = [{ dep: 2, prov: 0, dist: 0, inei: '030101', nom: 'ABANCAY'},
+  const DIST_ALL = [{ dep: 2, prov: 0, dist: 0, inei: '030101', nom: 'ABANCAY'},
   { dep: 1, prov: 22, dist: 1, inei: '020502', nom: 'ABELARDO PARDO LEZAMETA'},
   { dep: 3, prov: 37, dist: 2, inei: '040302', nom: 'ACARI'},
   { dep: 1, prov: 128, dist: 3, inei: '021402', nom: 'ACAS'},
@@ -2216,7 +2216,6 @@
           }
       }
   
-  
       function validateUbigeo(){
           if( isExist( depName ) ){
               // console.log('Se habilitaron los controles');
@@ -2239,7 +2238,7 @@
               limpiarSelect( distName, 'Selecciona el Distrito' );
               
               poblarProvDist( idPreDep, idPreProv, idPreDist );
-              initSdk();
+              //initSdk();
           }
       }
   
