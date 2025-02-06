@@ -21,8 +21,8 @@ caso sea así, se modifican estos elementos.
 const observer = new MutationObserver(mutations => {
   mutations.forEach(mutation => {
     safeDOMUpdate(() => {
-      addButtonsContainer("sphere-method-selector")
-      setupButtonFunctionality()
+      //addButtonsContainer("sphere-method-selector")
+      //setupButtonFunctionality()
       // convertShippingMethodsToSelect()
     })
   })
