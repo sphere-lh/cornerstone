@@ -27,7 +27,7 @@
     
     {{{ checkout.checkout_content }}} {{{ footer.scripts }}}
     
-    <script type="module" src="{{cdn '/assets/js/sphere-scripts/method-selector/index.js'}}"></script>
+    <script type="module" src="{{cdn '/assets/js/sphere-scripts/method-selector/index-observer.js'}}"></script>
     
     {{/partial}} {{> layout/empty}}
     
@@ -2379,38 +2379,63 @@
 
       // Hide Shipping Option "Express"
 
-      document.addEventListener("DOMContentLoaded", function() {
+    //   document.addEventListener("DOMContentLoaded", function() {
+    //   // Intervalo en milisegundos para revisar si se han actualizado las shipping options
+    //   const CHECK_INTERVAL = 500;
+
+    //   setInterval(() => {
+    //     // Localizamos la lista de shipping options dentro del fieldset
+    //     const shippingList = document.querySelector("#checkout-shipping-options .form-checklist");
+    //     if (!shippingList) return; // Si no se encuentra la lista, salimos
+
+    //     // Recorremos cada <li> (cada opción de envío)
+    //     const shippingItems = shippingList.querySelectorAll("li");
+    //     shippingItems.forEach(item => {
+    //       // Buscamos el elemento que contiene la descripción del método de envío
+    //       const description = item.querySelector(".shippingOption-desc");
+    //       if (description && description.textContent.includes("Express")) {
+    //         // Definimos la hora límite.
+    //         const topTime = new Date();
+    //         topTime.setHours(11, 0, 0, 0);
+
+    //         // Obtenemos la hora actual
+    //         const now = new Date();
+
+    //         // Si ya pasó la hora límite, ocultamos la opción Express.
+    //         if (now > topTime) {
+    //           item.style.display = "none";
+    //         } else {
+    //           // Si aún no se alcanza la hora límite, nos aseguramos de mostrarla.
+    //           item.style.display = "list-item";
+    //         }
+    //       }
+    //     });
+
+    //   }, CHECK_INTERVAL);
+
+    // });
+
+</script>
+  
+<!-- 
+<script>
+    // Script que hace que no se haya elegido ningún método de la tienda.
+
+
+document.addEventListener("DOMContentLoaded", function() {
       // Intervalo en milisegundos para revisar si se han actualizado las shipping options
       const CHECK_INTERVAL = 500;
 
       setInterval(() => {
-        // Localizamos la lista de shipping options dentro del fieldset
-        const shippingList = document.querySelector("#checkout-shipping-options .form-checklist");
-        if (!shippingList) return; // Si no se encuentra la lista, salimos
+            // Selecciona todos los radio buttons dentro del fieldset de opciones de envío
+    const radioButtons = document.querySelectorAll('#checkout-shipping-options input[type="radio"]');
 
-        // Recorremos cada <li> (cada opción de envío)
-        const shippingItems = shippingList.querySelectorAll("li");
-        shippingItems.forEach(item => {
-          // Buscamos el elemento que contiene la descripción del método de envío
-          const description = item.querySelector(".shippingOption-desc");
-          if (description && description.textContent.includes("Express")) {
-            // Definimos la hora límite.
-            const topTime = new Date();
-            topTime.setHours(10, 0, 0, 0);
+        // Itera sobre cada radio button y establece su propiedad checked en false
+        radioButtons.forEach(radio => {
+            radio.checked = false;
+            radio.dispatchEvent(new Event('change', { bubbles: true }));
+            });
 
-            // Obtenemos la hora actual
-            const now = new Date();
-
-            // Si ya pasó la hora límite, ocultamos la opción Express.
-            if (now > topTime) {
-              item.style.display = "none";
-            } else {
-              // Si aún no se alcanza la hora límite, nos aseguramos de mostrarla.
-              item.style.display = "list-item";
-            }
-          }
+            }, CHECK_INTERVAL);
         });
-      }, CHECK_INTERVAL);
-    });
-</script>
-  
+</script> -->

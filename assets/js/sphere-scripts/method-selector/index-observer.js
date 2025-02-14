@@ -11,6 +11,72 @@ const updateTitle = storeSelector => {
   optionalText?.remove()
 }
 
+// Variable global para controlar si se seleccionó un método
+let methodSelected = false;
+
+// Función para actualizar el estado del botón "Continuar"
+const updateContinueButtonState = () => {
+  const continueButton = document.getElementById("checkout-shipping-continue");
+  if (continueButton) {
+    // Deshabilita el botón si no se ha seleccionado ningún método
+    continueButton.disabled = !methodSelected;
+  }
+};
+
+// Función para configurar los listeners en los radio buttons de shipping
+const setupShippingMethodListeners = () => {
+  const radioButtons = document.querySelectorAll('#checkout-shipping-options input[type="radio"]');
+  if (!radioButtons.length) return;
+
+  radioButtons.forEach(radio => {
+    radio.addEventListener('change', function () {
+      if (this.checked) {
+        // Una vez que el usuario selecciona una opción, se marca la variable
+        methodSelected = true;
+        updateContinueButtonState();
+      }
+    });
+  });
+};
+
+// Inicialmente, se deshabilita el botón "Continuar"
+updateContinueButtonState();
+
+/* *********
+Este módulo es un observador permanente del DOM
+y tiene como objetivo revisar si las shipping options y
+el store selector están presentes. En caso sea así,
+se modifican estos elementos.
+********** */
+const observer = new MutationObserver(mutations => {
+  mutations.forEach(mutation => {
+    safeDOMUpdate(() => {
+      // Ejemplo: se agrega un contenedor de botones (según tu lógica)
+      addButtonsContainer("sphere-method-selector");
+      setupButtonFunctionality();
+      // Configuramos los listeners en los métodos de envío
+      setupShippingMethodListeners();
+      // Actualizamos el estado del botón por si se agregó o modificó en el DOM
+      updateContinueButtonState();
+    });
+  });
+});
+
+// Observa cambios en todo el body
+observer.observe(document.body, { childList: true, subtree: true })
+
+/* *********
+Este módulo desconecta temporalmente el observador
+para realizar modificaciones seguras en el DOM y
+luego lo reactiva, evitando bucles de observación.
+********** */
+const safeDOMUpdate = func => {
+  observer.disconnect()
+  func()
+  observer.observe(document.body, { childList: true, subtree: true })
+}
+
+
 // ****************************** Create Buttons Container
 
 // Función auxiliar para crear un botón con texto y clases adicionales.
@@ -26,34 +92,6 @@ function crearBoton(texto, claseExtra) {
   });
   return boton;
 }
-
-// ********************** 3. Comportamiento principal: DOMContentLoaded + setInterval
-document.addEventListener("DOMContentLoaded", function() {
-  // Intervalo en milisegundos para revisar si se han actualizado las shipping options
-  const CHECK_INTERVAL = 500;
-
-  setInterval(() => {
-
-    // 1. Buscar y limpiar título (Opcional)
-    // Asumiendo que tienes un store selector con cierta clase o ID
-    // const storeSelector = document.querySelector('#some-store-selector'); 
-    // if (storeSelector) {
-    //   updateTitle(storeSelector);
-    // }
-
-    // 3. Crear el contenedor de botones si aún no existe
-    //    (O si tienes tu propia lógica, puedes revisar si ya fue creado)
-    addButtonsContainer("sphere-method-selector");
-
-    // 4. Configurar la funcionalidad de los botones (asocia eventos, etc.)
-    //    Esto, si ya se configuró una vez, no se volverá a configurar porque
-    //    internamente tu código (setupButtonFunctionality) revisa si los listeners ya están conectados.
-    setupButtonFunctionality();
-
-    
-
-  }, CHECK_INTERVAL);
-});
 
 function addButtonsContainerStyles() {
   const style = document.createElement("style");
@@ -142,13 +180,8 @@ function addButtonsContainer(id = 'method-selector') {
 // *************************** Add buttons Functionality
 
 function setupButtonFunctionality() {
-  // Selecciona el fieldset de opciones de envío
   const shippingOptionsFieldset = document.querySelector('#checkout-shipping-options');
   if (!shippingOptionsFieldset) return;
-  
-  // Selecciona los elementos de la lista de shipping options
-  const listItems = shippingOptionsFieldset.querySelectorAll('ul.form-checklist > li');
-  if (!listItems.length) return;
   
   // Selecciona el contenedor de botones por su id "sphere-method-selector"
   const buttonsContainer = document.getElementById("sphere-method-selector");
@@ -162,55 +195,25 @@ function setupButtonFunctionality() {
   
   // Función auxiliar para actualizar el botón activo
   const updateActiveButton = (clickedButton) => {
-    // Remueve la clase 'active' de todos los botones del contenedor y la agrega solo al botón clicado
-    buttonsContainer.querySelectorAll("button").forEach(boton => boton.classList.remove("active"));
+    buttonsContainer.querySelectorAll("button").forEach(boton => {
+      boton.classList.remove("active");
+    });
     clickedButton.classList.add("active");
   };
-
-  // Función encargada de filtrar las opciones de envío
-  // segun `recojoEnTienda` (true = costo 0, false = costo > 0).
-  function filterShippingOptions(listItems, recojoEnTienda) {
-    if (!listItems) return;
-
-    listItems.forEach(item => {
-      // Intentar obtener el elemento que contiene el precio
-      const priceElement = item.querySelector('.shippingOption-price');
-      if (!priceElement) {
-        // Si no hay elemento de precio, mejor ocultar
-        item.style.display = 'none';
-        return;
-      }
-
-      // Extraer el texto, por ejemplo "S/.0.00", y convertirlo a número
-      const priceText = priceElement.textContent.trim(); // "S/.0.00"
-      // Eliminar todo lo que no sea dígito o punto (.)
-      const numericPrice = parseFloat(priceText.replace(/[^\d.]/g, '')) || 0;
-
-      // Si es recojoEnTienda, sólo mostramos métodos con costo 0
-      if (recojoEnTienda) {
-        if (numericPrice === 0) {
-          item.style.display = "list-item";
-        } else {
-          item.style.display = "none";
-        }
-      } else {
-        // Entrega a domicilio: métodos con costo > 0
-        if (numericPrice > 0) {
-          item.style.display = "list-item";
-        } else {
-          item.style.display = "none";
-        }
-      }
-    });
-  }
 
   // Función manejadora para el botón "Recojo en tienda"
   const handleRecojoClick = (event) => {
     event.preventDefault();
     event.stopPropagation();
     updateActiveButton(btnRecojo);
+    
+    // Cada vez que hacemos clic, tomamos los listItems **actuales**
+    const shippingOptionsFieldset = document.querySelector('#checkout-shipping-options');
+    if (!shippingOptionsFieldset) return;
+    const listItems = shippingOptionsFieldset.querySelectorAll('ul.form-checklist > li');
+    if (!listItems.length) return;
+
     filterShippingOptions(listItems, true);
-    console.log('Click btnRecojo');
   };
   
   // Función manejadora para el botón "Entrega a domicilio"
@@ -218,8 +221,14 @@ function setupButtonFunctionality() {
     event.preventDefault();
     event.stopPropagation();
     updateActiveButton(btnEntrega);
+
+    // Lo mismo: adquirimos la lista actual de <li>
+    const shippingOptionsFieldset = document.querySelector('#checkout-shipping-options');
+    if (!shippingOptionsFieldset) return;
+    const listItems = shippingOptionsFieldset.querySelectorAll('ul.form-checklist > li');
+    if (!listItems.length) return;
+
     filterShippingOptions(listItems, false);
-    console.log('Click btnEntrega');
   };
 
   // Añadimos listeners solo si no se han agregado antes
@@ -234,4 +243,41 @@ function setupButtonFunctionality() {
     btnEntrega.addEventListener("click", handleEntregaClick);
     btnEntrega.dataset.listenerAttached = "true";
   }
+}
+
+// Función encargada de filtrar las opciones de envío
+  // segun `recojoEnTienda` (true = costo 0, false = costo > 0).
+function filterShippingOptions(listItems, recojoEnTienda) {
+  if (!listItems) return;
+
+  listItems.forEach(item => {
+    // Intentar obtener el elemento que contiene el precio
+    const priceElement = item.querySelector('.shippingOption-price');
+    if (!priceElement) {
+      // Si no hay elemento de precio, mejor ocultar
+      item.style.display = 'none';
+      return;
+    }
+
+    // Extraer el texto, por ejemplo "S/.0.00", y convertirlo a número
+    const priceText = priceElement.textContent.trim(); // "S/.0.00"
+    // Eliminar todo lo que no sea dígito o punto (.)
+    const numericPrice = parseFloat(priceText.replace(/[^\d.]/g, '')) || 0;
+
+    // Si es recojoEnTienda, sólo mostramos métodos con costo 0
+    if (recojoEnTienda) {
+      if (numericPrice === 0) {
+        item.style.display = "list-item";
+      } else {
+        item.style.display = "none";
+      }
+    } else {
+      // Entrega a domicilio: métodos con costo > 0
+      if (numericPrice > 0) {
+        item.style.display = "list-item";
+      } else {
+        item.style.display = "none";
+      }
+    }
+  });
 }
